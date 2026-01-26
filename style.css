@@ -8,7 +8,6 @@
   margin: 0;
   box-sizing: border-box;
   outline: none;
-  flex: 0 0 auto;
 }
 
 *::-webkit-scrollbar {
@@ -152,6 +151,9 @@ aside.info-banner.active {
 .button-General{
   background-color: #CA61C3;
   padding: .47em 2em;
+  display: flex;
+  flex-shrink: 0;
+  min-width: 0;
   border-radius: 8px;
 
 }
