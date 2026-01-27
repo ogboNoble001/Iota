@@ -1,0 +1,33 @@
+{
+  "name": "IOTA - UI/UX Design App",
+  "short_name": "IOTA",
+  "description": "Mobile friendly offline web app for creating UI/UX designs and editing photos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#292D29",
+  "theme_color": "#CA61C3",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/assets/imgs/20260126_160735.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/imgs/20260126_160735.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "graphics"],
+  "screenshots": [
+    {
+      "src": "/assets/imgs/20260126_151700.jpg",
+      "sizes": "540x720",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    }
+  ]
+}
