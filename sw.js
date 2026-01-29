@@ -1,4 +1,6 @@
-const CACHE_NAME = 'iota-v1';
+const CACHE_VERSION = 'v2'; // INCREMENT THIS when you make changes!
+const CACHE_NAME = `iota-${CACHE_VERSION}`;
+
 const urlsToCache = [
   '/',
   '/index.html',
@@ -17,7 +19,7 @@ const urlsToCache = [
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing...');
+  console.log('[SW] Installing version:', CACHE_VERSION);
   event.waitUntil(
     caches.open(CACHE_NAME)
     .then((cache) => {
@@ -28,50 +30,18 @@ self.addEventListener('install', (event) => {
       console.error('[SW] Cache failed:', error);
     })
   );
-  self.skipWaiting();
-});
-
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-    .then((response) => {
-      if (response) {
-        return response;
-      }
-      
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        
-        const responseToCache = response.clone();
-        
-        caches.open(CACHE_NAME)
-          .then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        
-        return response;
-      });
-    })
-    .catch(() => {
-      // Return offline page or fallback
-      return caches.match('/index.html');
-    })
-  );
+  self.skipWaiting(); // Force activation of new service worker
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating...');
-  const cacheWhitelist = [CACHE_NAME];
+  console.log('[SW] Activating version:', CACHE_VERSION);
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (cacheName !== CACHE_NAME) {
             console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -80,5 +50,70 @@ self.addEventListener('activate', (event) => {
     })
   );
   
-  return self.clients.claim();
+  return self.clients.claim(); // Take control immediately
+});
+
+// Fetch event - NETWORK FIRST for HTML/JS/CSS, cache first for assets
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Network first for HTML, CSS, and JS files
+  if (
+    request.url.includes('.html') ||
+    request.url.includes('.js') ||
+    request.url.includes('.css') ||
+    url.pathname === '/'
+  ) {
+    event.respondWith(
+      fetch(request)
+      .then((response) => {
+        // Update cache with fresh content
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => {
+        // Fallback to cache if offline
+        return caches.match(request);
+      })
+    );
+  }
+  // Cache first for images and fonts (they don't change often)
+  else {
+    event.respondWith(
+      caches.match(request)
+      .then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        
+        return fetch(request).then((response) => {
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+          
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
+          });
+          
+          return response;
+        });
+      })
+      .catch(() => {
+        // Fallback to offline page
+        return caches.match('/index.html');
+      })
+    );
+  }
+});
+
+// Listen for messages from the client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

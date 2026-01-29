@@ -16,6 +16,12 @@ window.addEventListener('appinstalled', () => {
 // Check if running as PWA
 if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
   isPWAInstalled = true;
+  localStorage.setItem('pwa-installed', 'true');
+}
+
+// Check localStorage on load
+if (localStorage.getItem('pwa-installed') === 'true') {
+  isPWAInstalled = true;
 }
 
 /* ---------------- CONFIG ---------------- */
@@ -68,6 +74,11 @@ Offline, Accessible and Free`,
 function renderAside(config) {
   const sheetContent = document.querySelector(".sheet-content");
   
+  if (!sheetContent) {
+    console.error('Sheet content element not found');
+    return;
+  }
+  
   if (config.newProjectBtn) {
     // Render menu layout
     sheetContent.innerHTML = `
@@ -113,7 +124,7 @@ function renderAside(config) {
     // Render original layout
     sheetContent.innerHTML = `
       <div class="imgPrnt">
-        <img class="aside-image" src="${config.image}" alt="" />
+        <img class="aside-image" src="${config.image}" alt="IOTA App" />
       </div>
 
       <div class="sheet-divOfText">
@@ -128,7 +139,7 @@ function renderAside(config) {
       <div class="appDisplay flex-col diff1 diff4">
         <div class="flex-row ai-c diff2 diff4">
           <div class="appIcon notAligned noShaking">
-            <img class="aside-app-icon" src="${config.app.icon}" alt="" />
+            <img class="aside-app-icon" src="${config.app.icon}" alt="${config.app.name}" />
           </div>
 
           <div class="flex-col jc-c diff1">
@@ -136,20 +147,22 @@ function renderAside(config) {
             <span class="appDisplayText aside-app-desc">${config.app.desc}</span>
           </div>
 
-          <div class="button-General noShaking aside-app-action ${config.installPrompt ? 'install-action' : ''}">${config.app.actionText}</div>
+          <button class="button-General noShaking aside-app-action ${config.installPrompt ? 'install-action' : ''}" type="button">
+            ${config.app.actionText}
+          </button>
         </div>
 
         <br /><br />
 
         <div class="flex-row diff2 dismiss-row" style="display: ${config.dismissible ? 'flex' : 'none'}">
-          <div class="notAligned dismiss-toggle">
+          <button class="notAligned dismiss-toggle" type="button" aria-label="Don't show again">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
               viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="lucide lucide-circle">
               <circle cx="12" cy="12" r="10"/>
             </svg>
-          </div>
+          </button>
           <span class="font-light">Don't show me this again</span>
         </div>
       </div>
@@ -157,15 +170,24 @@ function renderAside(config) {
     
     // Re-attach dismiss toggle listener
     if (config.dismissible) {
-      document.querySelector(".dismiss-toggle")?.addEventListener("click", () => {
-        localStorage.setItem(`aside-dismissed-${config.id}`, "true");
-        closeSheet();
-      });
+      const dismissBtn = document.querySelector(".dismiss-toggle");
+      if (dismissBtn) {
+        dismissBtn.addEventListener("click", () => {
+          localStorage.setItem(`aside-dismissed-${config.id}`, "true");
+          if (config.installPrompt) {
+            localStorage.setItem('install-prompt-dismissed-time', Date.now().toString());
+          }
+          closeSheet();
+        });
+      }
     }
     
     // Attach install action listener
     if (config.installPrompt) {
-      document.querySelector(".install-action")?.addEventListener("click", installApp);
+      const installBtn = document.querySelector(".install-action");
+      if (installBtn) {
+        installBtn.addEventListener("click", installApp);
+      }
     }
   }
 }
@@ -173,20 +195,30 @@ function renderAside(config) {
 /* ---------------- SHEET CONTROL ---------------- */
 
 function openSheet() {
-  overlay.classList.add("active");
-  bottomSheet.classList.add("active");
+  if (overlay && bottomSheet) {
+    overlay.classList.add("active");
+    bottomSheet.classList.add("active");
+  }
 }
 
 function closeSheet() {
-  overlay.classList.remove("active");
-  bottomSheet.classList.remove("active");
+  if (overlay && bottomSheet) {
+    overlay.classList.remove("active");
+    bottomSheet.classList.remove("active");
+  }
 }
 
 function openAside(type) {
   const config = asideConfigs[type];
-  if (!config) return;
+  if (!config) {
+    console.error(`Invalid aside type: ${type}`);
+    return;
+  }
   
-  if (localStorage.getItem(`aside-dismissed-${config.id}`)) return;
+  if (localStorage.getItem(`aside-dismissed-${config.id}`)) {
+    console.log(`Aside ${config.id} was previously dismissed`);
+    return;
+  }
   
   renderAside(config);
   openSheet();
@@ -201,6 +233,8 @@ function installApp() {
       if (choiceResult.outcome === 'accepted') {
         console.log('User accepted the install prompt');
         localStorage.setItem('aside-dismissed-installPrompt', 'true');
+        localStorage.setItem('pwa-installed', 'true');
+        isPWAInstalled = true;
         closeSheet();
       } else {
         console.log('User dismissed the install prompt');
@@ -209,6 +243,7 @@ function installApp() {
     });
   } else {
     // Fallback message
+    console.log('Install prompt not available');
     alert('App is already installed or install prompt is not available. You can install it from your browser menu.');
   }
 }
@@ -221,16 +256,23 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 /* ---------------- EVENTS ---------------- */
 
-overlay.addEventListener("click", closeSheet);
+if (overlay) {
+  overlay.addEventListener("click", closeSheet);
+}
 
-howToBtn.addEventListener("click", () => {
-  openAside("onboarding");
-});
+if (howToBtn) {
+  howToBtn.addEventListener("click", () => {
+    openAside("onboarding");
+  });
+}
 
 // New button click handler
-document.querySelector(".button-General-v2")?.addEventListener("click", () => {
-  openAside("newProject");
-});
+const newProjectBtn = document.querySelector(".button-General-v2");
+if (newProjectBtn) {
+  newProjectBtn.addEventListener("click", () => {
+    openAside("newProject");
+  });
+}
 
 // Handle menu option clicks (use event delegation)
 document.addEventListener("click", (e) => {
@@ -252,37 +294,39 @@ document.addEventListener("click", (e) => {
 
 /* ---------------- AUTO OPEN ---------------- */
 
-setTimeout(() => {
-  // Check if already installed or dismissed
-  const hasSeenOnboarding = localStorage.getItem('aside-dismissed-onboarding');
-  const hasSeenInstallPrompt = localStorage.getItem('aside-dismissed-installPrompt');
-  const isInstalled = localStorage.getItem('pwa-installed') || isPWAInstalled;
-  
-  if (!hasSeenOnboarding) {
-    // Show onboarding first
-    openAside("onboarding");
-  } else if (!hasSeenInstallPrompt && !isInstalled && deferredPrompt) {
-    // Show install prompt if onboarding was seen and app not installed
-    openAside("installPrompt");
-  }
-}, 500);
-
-// Show install prompt again after 3 days if dismissed
-setTimeout(() => {
-  const hasSeenInstallPrompt = localStorage.getItem('aside-dismissed-installPrompt');
-  const isInstalled = localStorage.getItem('pwa-installed') || isPWAInstalled;
-  
-  if (hasSeenInstallPrompt && !isInstalled && deferredPrompt) {
-    const dismissedTime = localStorage.getItem('install-prompt-dismissed-time');
-    const threeDays = 3 * 24 * 60 * 60 * 1000;
+// Wait for DOM to be ready
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    // Check if already installed or dismissed
+    const hasSeenOnboarding = localStorage.getItem('aside-dismissed-onboarding');
+    const hasSeenInstallPrompt = localStorage.getItem('aside-dismissed-installPrompt');
+    const isInstalled = localStorage.getItem('pwa-installed') === 'true' || isPWAInstalled;
     
-    if (!dismissedTime || (Date.now() - parseInt(dismissedTime)) > threeDays) {
-      localStorage.removeItem('aside-dismissed-installPrompt');
+    if (!hasSeenOnboarding) {
+      // Show onboarding first
+      openAside("onboarding");
+    } else if (!hasSeenInstallPrompt && !isInstalled && deferredPrompt) {
+      // Show install prompt if onboarding was seen and app not installed
       openAside("installPrompt");
-      localStorage.setItem('install-prompt-dismissed-time', Date.now().toString());
     }
-  }
-}, 10000); // Check after 10 seconds
+  }, 500);
+
+  // Show install prompt again after 3 days if dismissed
+  setTimeout(() => {
+    const hasSeenInstallPrompt = localStorage.getItem('aside-dismissed-installPrompt');
+    const isInstalled = localStorage.getItem('pwa-installed') === 'true' || isPWAInstalled;
+    
+    if (hasSeenInstallPrompt && !isInstalled && deferredPrompt) {
+      const dismissedTime = localStorage.getItem('install-prompt-dismissed-time');
+      const threeDays = 3 * 24 * 60 * 60 * 1000;
+      
+      if (dismissedTime && (Date.now() - parseInt(dismissedTime)) > threeDays) {
+        localStorage.removeItem('aside-dismissed-installPrompt');
+        openAside("installPrompt");
+      }
+    }
+  }, 10000); // Check after 10 seconds
+});
 
 /* ---------------- SERVICE WORKER REGISTRATION ---------------- */
 
@@ -290,10 +334,27 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('ServiceWorker registration successful:', registration.scope);
+        console.log('[App] ServiceWorker registered:', registration.scope);
+        
+        // Check for updates every time the page loads
+        registration.update();
+        
+        // Listen for new service worker waiting
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('[App] New version available! Reloading...');
+              // Automatically activate new service worker
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+              window.location.reload();
+            }
+          });
+        });
       })
       .catch((error) => {
-        console.log('ServiceWorker registration failed:', error);
+        console.log('[App] ServiceWorker registration failed:', error);
       });
   });
 }
