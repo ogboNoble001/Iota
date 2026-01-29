@@ -1,7 +1,7 @@
 {
-"name": "IOTA - UI/UX Design App",
+"name": "Iota",
 "short_name": "Iota",
-"description": "Mobile friendly offline web app for creating UI/UX designs and editing photos",
+"description": "Mobile offline app for creating UI/UX designs",
 "start_url": "/",
 "scope": "/",
 "display": "standalone",
