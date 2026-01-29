@@ -242,3 +242,161 @@ main{
 .option-icon svg {
   color: white;
 }
+
+/* Editor Styles */
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #292D29;
+}
+
+.editor-header {
+  padding: 1em 1.5em;
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #424542;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5em;
+}
+
+.project-name-input {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1em;
+  text-align: center;
+  font-family: 'Chillax-Medium';
+  flex: 1;
+  margin: 0 1em;
+}
+
+.editor-workspace {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1em;
+  overflow: auto;
+}
+
+#artboard, #photo-canvas {
+  background: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.toolbar {
+  padding: 1em;
+  background-color: #1e1e1e;
+  border-top: 1px solid #424542;
+  gap: 1em;
+}
+
+.tool-btn {
+  background: #2B332B;
+  border: 1px solid #424542;
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.tool-btn:hover {
+  background-color: #353A35;
+  border-color: #CA61C3;
+}
+
+.tool-btn:active {
+  transform: scale(0.95);
+}
+
+/* Projects Grid */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1em;
+  padding: 1.5em;
+  width: 100%;
+}
+
+.project-card {
+  background-color: #2B332B;
+  border: 1px solid #424542;
+  border-radius: 8px;
+  padding: 1em;
+  cursor: pointer;
+  transition: all 200ms ease;
+  position: relative;
+}
+
+.project-card:hover {
+  border-color: #CA61C3;
+  transform: translateY(-2px);
+}
+
+.project-thumbnail {
+  width: 100%;
+  aspect-ratio: 1;
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.8em;
+}
+
+.project-thumbnail svg {
+  color: #CA61C3;
+  opacity: 0.6;
+}
+
+.project-info h3 {
+  font-size: 0.9em;
+  margin-bottom: 0.3em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-info p {
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+
+.delete-project {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.project-card:hover .delete-project {
+  opacity: 1;
+}
+
+.delete-project:hover {
+  background: #CA61C3;
+}
